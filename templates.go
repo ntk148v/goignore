@@ -42,6 +42,8 @@ func initTemplates() error {
 		cmd := exec.Command("git", []string{"clone", "--", gitignoreUrl, dataPath}...)
 		cmd.Dir = dataPath
 		if err := cmd.Run(); err != nil {
+			// if error, clean the path
+			os.Remove(dataPath)
 			return err
 		}
 	}
