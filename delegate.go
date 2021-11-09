@@ -51,6 +51,7 @@ func newDelegateKeyMap() *delegateKeyMap {
 
 func newItemDelegate(keys *delegateKeyMap) list.DefaultDelegate {
 	d := list.NewDefaultDelegate()
+	d.ShowDescription = false
 
 	d.UpdateFunc = func(msg tea.Msg, m *list.Model) tea.Cmd {
 		var title, path string
