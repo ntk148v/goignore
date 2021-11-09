@@ -1,3 +1,3 @@
-module github.com/ntk148v/YOUR-REPO-NAME
+module github.com/ntk148v/goignore
 
-go 1.14
+go 1.16
