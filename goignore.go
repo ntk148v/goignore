@@ -29,12 +29,14 @@ var (
 )
 
 type item struct {
-	title string
-	path  string
+	title       string
+	description string
+	path        string
 }
 
 func (i item) Title() string       { return i.title }
 func (i item) Path() string        { return i.path }
+func (i item) Description() string { return i.description }
 func (i item) FilterValue() string { return i.title }
 
 type listKeyMap struct {
