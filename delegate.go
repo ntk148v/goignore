@@ -54,7 +54,7 @@ func newItemDelegate(keys *delegateKeyMap) list.DefaultDelegate {
 			case key.Matches(msg, keys.choose):
 				// Copy .gitignore template
 				pwd, _ := os.Getwd()
-				if err := copyTemplate(path, filepath.Join(pwd, ".gitignore2")); err != nil {
+				if err := copyTemplate(path, filepath.Join(pwd, ".gitignore")); err != nil {
 					return m.NewStatusMessage(errorMessageStyle(err.Error()))
 				}
 				return m.NewStatusMessage(statusMessageStyle("Use template " + title))
