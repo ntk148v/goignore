@@ -71,6 +71,8 @@ func updateTemplateList() ([]list.Item, error) {
 	return items, err
 }
 
+// copyTemplate updates the .gitignore in current directory
+// with the chosen gitignore
 func copyTemplate(src, dest string) error {
 	srcFile, err := os.Open(src)
 	if err != nil {
@@ -96,6 +98,7 @@ func copyTemplate(src, dest string) error {
 	return err
 }
 
+// pullTemplateUpdates performs git pull
 func pullTemplateUpdates() error {
 	cmd := exec.Command("git", []string{"pull"}...)
 	cmd.Dir = dataPath
