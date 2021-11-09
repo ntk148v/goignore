@@ -1,0 +1,96 @@
+package main
+
+import (
+	"io"
+	"os"
+	"os/exec"
+	"os/user"
+	"path"
+	"path/filepath"
+	"regexp"
+	"strconv"
+
+	"github.com/charmbracelet/bubbles/list"
+)
+
+const (
+	gitignoreUrl = "https://github.com/github/gitignore.git"
+	dataDir      = ".cache/goignore"
+)
+
+var dataPath = path.Join(os.Getenv("HOME"), dataDir)
+
+// initTemplates run at start up
+func initTemplates() error {
+	if _, err := os.Stat(dataPath); err != nil {
+		if !os.IsNotExist(err) {
+			return err
+		}
+		// Setup directory
+		curUsr, err := user.Current()
+		if err != nil {
+			return err
+		}
+
+		os.MkdirAll(dataPath, 0755)
+		uid, _ := strconv.Atoi(curUsr.Uid)
+		gid, _ := strconv.Atoi(curUsr.Gid)
+		os.Chown(dataPath, uid, gid)
+
+		// if data dir is empty, get the newest Gitignore templates.
+		cmd := exec.Command("git", []string{"clone", "--", gitignoreUrl, dataPath}...)
+		cmd.Dir = dataPath
+		if err := cmd.Run(); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+// updateTemplateList gets a list of templates from data dir
+func updateTemplateList() ([]list.Item, error) {
+	items := make([]list.Item, 0)
+	ignoreRegEx, err := regexp.Compile("^.+(.gitignore)$")
+	if err != nil {
+		return items, err
+	}
+	err = filepath.Walk(dataPath, func(path string, info os.FileInfo, err error) error {
+		if err == nil && ignoreRegEx.MatchString(info.Name()) {
+			if info.IsDir() {
+				path = filepath.Join(path, info.Name())
+			}
+			items = append(items, item{
+				title: info.Name(),
+				path:  path,
+			})
+		}
+		return nil
+	})
+	return items, err
+}
+
+func copyTemplate(src, dest string) error {
+	srcFile, err := os.Open(src)
+	if err != nil {
+		return err
+	}
+
+	// create if file doesn't exist
+	destFile, err := os.Create(dest)
+	if err != nil {
+		return err
+	}
+
+	defer func() {
+		srcFile.Close()
+		destFile.Close()
+	}()
+
+	if _, err = io.Copy(destFile, srcFile); err != nil {
+		return err
+	}
+
+	err = destFile.Sync()
+	return err
+}

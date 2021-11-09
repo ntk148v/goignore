@@ -1,0 +1,47 @@
+# github.com/atotto/clipboard v0.1.2
+github.com/atotto/clipboard
+# github.com/charmbracelet/bubbles v0.9.0
+## explicit
+github.com/charmbracelet/bubbles/help
+github.com/charmbracelet/bubbles/key
+github.com/charmbracelet/bubbles/list
+github.com/charmbracelet/bubbles/paginator
+github.com/charmbracelet/bubbles/spinner
+github.com/charmbracelet/bubbles/textinput
+# github.com/charmbracelet/bubbletea v0.19.1
+## explicit
+github.com/charmbracelet/bubbletea
+# github.com/charmbracelet/lipgloss v0.4.0
+## explicit
+github.com/charmbracelet/lipgloss
+# github.com/containerd/console v1.0.2
+github.com/containerd/console
+# github.com/lucasb-eyer/go-colorful v1.2.0
+github.com/lucasb-eyer/go-colorful
+# github.com/mattn/go-isatty v0.0.13
+github.com/mattn/go-isatty
+# github.com/mattn/go-runewidth v0.0.13
+github.com/mattn/go-runewidth
+# github.com/muesli/ansi v0.0.0-20211018074035-2e021307bc4b
+github.com/muesli/ansi
+github.com/muesli/ansi/compressor
+# github.com/muesli/reflow v0.3.0
+github.com/muesli/reflow/ansi
+github.com/muesli/reflow/truncate
+github.com/muesli/reflow/wordwrap
+github.com/muesli/reflow/wrap
+# github.com/muesli/termenv v0.9.0
+github.com/muesli/termenv
+# github.com/pkg/errors v0.9.1
+github.com/pkg/errors
+# github.com/rivo/uniseg v0.2.0
+github.com/rivo/uniseg
+# github.com/sahilm/fuzzy v0.1.0
+github.com/sahilm/fuzzy
+# golang.org/x/sys v0.0.0-20210124154548-22da62e12c0c
+golang.org/x/sys/internal/unsafeheader
+golang.org/x/sys/plan9
+golang.org/x/sys/unix
+golang.org/x/sys/windows
+# golang.org/x/term v0.0.0-20210422114643-f5beecf764ed
+golang.org/x/term
