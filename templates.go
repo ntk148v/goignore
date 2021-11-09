@@ -26,6 +26,8 @@ func initTemplates() error {
 		if !os.IsNotExist(err) {
 			return err
 		}
+
+		// if data dir is empty, get the newest Gitignore templates.
 		// Setup directory
 		curUsr, err := user.Current()
 		if err != nil {
@@ -37,7 +39,6 @@ func initTemplates() error {
 		gid, _ := strconv.Atoi(curUsr.Gid)
 		os.Chown(dataPath, uid, gid)
 
-		// if data dir is empty, get the newest Gitignore templates.
 		cmd := exec.Command("git", []string{"clone", "--", gitignoreUrl, dataPath}...)
 		cmd.Dir = dataPath
 		if err := cmd.Run(); err != nil {
@@ -92,5 +93,12 @@ func copyTemplate(src, dest string) error {
 	}
 
 	err = destFile.Sync()
+	return err
+}
+
+func pullTemplateUpdates() error {
+	cmd := exec.Command("git", []string{"pull"}...)
+	cmd.Dir = dataPath
+	err := cmd.Run()
 	return err
 }

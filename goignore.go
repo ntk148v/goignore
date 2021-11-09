@@ -38,19 +38,19 @@ func (i item) Path() string        { return i.path }
 func (i item) FilterValue() string { return i.title }
 
 type listKeyMap struct {
-	toggleSpinner    key.Binding
-	toggleTitleBar   key.Binding
-	toggleStatusBar  key.Binding
-	togglePagination key.Binding
-	toggleHelpMenu   key.Binding
-	updateItems      key.Binding
+	toggleSpinner       key.Binding
+	toggleTitleBar      key.Binding
+	toggleStatusBar     key.Binding
+	togglePagination    key.Binding
+	toggleHelpMenu      key.Binding
+	pullTemplateUpdates key.Binding
 }
 
 func newListKeyMap() *listKeyMap {
 	return &listKeyMap{
-		updateItems: key.NewBinding(
+		pullTemplateUpdates: key.NewBinding(
 			key.WithKeys("u"),
-			key.WithHelp("u", "update ignore templates"),
+			key.WithHelp("u", "pull the newest gitignore templates"),
 		),
 		toggleSpinner: key.NewBinding(
 			key.WithKeys("s"),
@@ -101,7 +101,7 @@ func newModel() model {
 	ignoreList.AdditionalFullHelpKeys = func() []key.Binding {
 		return []key.Binding{
 			listKeys.toggleSpinner,
-			listKeys.updateItems,
+			listKeys.pullTemplateUpdates,
 			listKeys.toggleTitleBar,
 			listKeys.toggleStatusBar,
 			listKeys.togglePagination,
@@ -157,9 +157,12 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.list.SetShowHelp(!m.list.ShowHelp())
 			return m, nil
 
-		case key.Matches(msg, m.keys.updateItems):
-			// TODO(kiennt65): Perform git pull here
-			return m, tea.Quit
+		case key.Matches(msg, m.keys.pullTemplateUpdates):
+			cmd := m.list.NewStatusMessage(statusMessageStyle("Pull newest templates"))
+			if err := pullTemplateUpdates(); err != nil {
+				cmd = m.list.NewStatusMessage(errorMessageStyle(err.Error()))
+			}
+			return m, tea.Batch(cmd)
 		}
 	}
 
