@@ -77,8 +77,8 @@ func copyTemplate(src, dest string) error {
 		return err
 	}
 
-	// create if file doesn't exist
-	destFile, err := os.Create(dest)
+	// create if file doesn't exist, append if file exists
+	destFile, err := os.OpenFile(dest, os.O_RDWR|os.O_APPEND, 0660)
 	if err != nil {
 		return err
 	}
