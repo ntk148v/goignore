@@ -33,18 +33,18 @@ goignore
 
 - The list of gitignore templates.
 
-![](./screenshots/2021-11-09_16-53.png)
+![](./screenshots/start.png)
 
 - Show help.
 
-![](./screenshots/2021-11-09_16-54.png)
+![](./screenshots/help.png)
 
 - Filter.
 
-![](./screenshots/2021-11-09_16-54_1.png)
+![](./screenshots/filter1.png)
 
-![](./screenshots/2021-11-09_16-54_2.png)
+![](./screenshots/filter2.png)
 
 - Result, the current gitignore is updated.
 
-![](./screenshots/2021-11-09_16-55.png)
+![](./screenshots/diff.png)
