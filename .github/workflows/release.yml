@@ -23,10 +23,10 @@ jobs:
 
       - name: Build & test
         run: |
-          GOOS=windows GOARCH=386 go build -ldflags "-s -w" -o build/goignore-x86.exe *.go
-          GOOS=windows GOARCH=amd64 go build -ldflags "-s -w" -o build/goignore.exe *.go
-          GOOS=linux GOARCH=386 go build -ldflags "-s -w" -o build/goignore-x86 *.go
-          GOOS=linux GOARCH=amd64 go build -ldflags "-s -w" -o build/goignore *.go
+          GOOS=windows GOARCH=386 go build -ldflags "-s -w" -o build/goignore-windows-x86.exe *.go
+          GOOS=windows GOARCH=amd64 go build -ldflags "-s -w" -o build/goignore-windows.exe *.go
+          GOOS=linux GOARCH=386 go build -ldflags "-s -w" -o build/goignore-linux-x86 *.go
+          GOOS=linux GOARCH=amd64 go build -ldflags "-s -w" -o build/goignore-linux *.go
           GOOS=darwin GOARCH=amd64 go build -ldflags "-s -w" -o build/goignore-darwin *.go
 
       - uses: marvinpinto/action-automatic-releases@latest
