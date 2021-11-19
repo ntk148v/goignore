@@ -34,7 +34,7 @@ import (
 
 const (
 	gitignoreUrl = "https://github.com/github/gitignore"
-	dataDir      = ".cache/goignore"
+	dataDir      = ".goignore"
 )
 
 var dataPath = path.Join(os.Getenv("HOME"), dataDir)
