@@ -27,7 +27,6 @@ jobs:
           GOOS=windows GOARCH=amd64 go build -ldflags "-s -w" -o build/goignore.exe *.go
           GOOS=linux GOARCH=386 go build -ldflags "-s -w" -o build/goignore-x86 *.go
           GOOS=linux GOARCH=amd64 go build -ldflags "-s -w" -o build/goignore *.go
-          GOOS=darwin GOARCH=386 go build -ldflags "-s -w" -o build/goignore-darwin-x86 *.go
           GOOS=darwin GOARCH=amd64 go build -ldflags "-s -w" -o build/goignore-darwin *.go
 
       - uses: marvinpinto/action-automatic-releases@latest
