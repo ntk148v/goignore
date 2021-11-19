@@ -16,7 +16,7 @@ A `.gitignore` wizard which gnerates `.gitignore` files from the command line fo
 
 ## 2. Install
 
-- This tool is tested in Linux environment (Ubuntu 20.04). The only requirement is [git](https://git-scm.com/book/en/v2/Getting-Started-Installing-Git).
+- This tool is tested in Linux environment (Ubuntu 20.04).
 - Download the latest binary from the [Release page](https://github.com/ntk148v/goignore/releases). It's the easiest way to get started with `goignore`.
 - Make sure to add the location of the binary to your `$PATH`.
 
