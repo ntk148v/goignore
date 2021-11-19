@@ -132,7 +132,7 @@ func downloadTemplates() error {
 		return cmd.Run()
 	}
 
-	archivePath := path.Join("/tmp", "gitignore.zip")
+	archivePath := path.Join(os.TempDir(), "gitignore.zip")
 	// Create the file
 	out, err := os.Create(archivePath)
 	if err != nil {
@@ -156,11 +156,11 @@ func downloadTemplates() error {
 	}
 
 	// Unzip to a temporary directory
-	if err = unzip(archivePath, "/tmp"); err != nil {
+	if err = unzip(archivePath, os.TempDir()); err != nil {
 		return err
 	}
 
-	err = shutil.CopyTree(path.Join("/tmp", "gitignore-master"), dataPath, nil)
+	err = shutil.CopyTree(path.Join(os.TempDir(), "gitignore-master"), dataPath, nil)
 	if err != nil {
 		return err
 	}
