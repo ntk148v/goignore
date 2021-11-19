@@ -22,10 +22,17 @@ jobs:
         uses: actions/checkout@v2
 
       - name: Build & test
-        run: go build -ldflags "-s -w" -o /tmp/goignore *.go
+        run: |
+          GOOS=windows GOARCH=386 go build -ldflags "-s -w" -o build/goignore-x86.exe *.go
+          GOOS=windows GOARCH=amd64 go build -ldflags "-s -w" -o build/goignore.exe *.go
+          GOOS=linux GOARCH=386 go build -ldflags "-s -w" -o build/goignore-x86 *.go
+          GOOS=linux GOARCH=amd64 go build -ldflags "-s -w" -o build/goignore *.go
+          GOOS=darwin GOARCH=386 go build -ldflags "-s -w" -o build/goignore-darwin-x86 *.go
+          GOOS=darwin GOARCH=amd64 go build -ldflags "-s -w" -o build/goignore-darwin *.go
 
       - uses: marvinpinto/action-automatic-releases@latest
         with:
           repo_token: "${{ secrets.GITHUB_TOKEN }}"
           prerelease: false
-          files: /tmp/goignore
+          files: |
+            build/*
