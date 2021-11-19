@@ -115,7 +115,7 @@ func unzip(src, dest string) error {
 // 2. If not, just download then unzip it.
 func downloadTemplates() error {
 	// Check if git is already installed
-	if commandExists("wrong") {
+	if commandExists("git") {
 		// if data dir is empty, get the newest Gitignore templates.
 		// Setup directory
 		curUsr, err := user.Current()
