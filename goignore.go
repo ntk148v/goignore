@@ -201,8 +201,6 @@ func main() {
 		os.Exit(1)
 	}
 
-	fmt.Println(statusMessageStyle("Gitignore templates are downloaded"))
-
 	if err := tea.NewProgram(newModel()).Start(); err != nil {
 		fmt.Println("Error running program:", err)
 		os.Exit(1)
