@@ -67,6 +67,8 @@ func newItemDelegate(keys *delegateKeyMap) list.DefaultDelegate {
 		case tea.KeyMsg:
 			switch {
 			case key.Matches(msg, keys.choose):
+				// Reset filter when template was chosen.
+				defer m.ResetFilter()
 				// Copy .gitignore template
 				pwd, _ := os.Getwd()
 				if err := copyTemplate(path, filepath.Join(pwd, ".gitignore")); err != nil {
