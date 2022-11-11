@@ -23,6 +23,8 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 )
 
+var chosenTemplates = map[string]struct{}{}
+
 type delegateKeyMap struct {
 	// choose is the only option at this time
 	choose key.Binding
@@ -69,11 +71,20 @@ func newItemDelegate(keys *delegateKeyMap) list.DefaultDelegate {
 			case key.Matches(msg, keys.choose):
 				// Reset filter when template was chosen.
 				defer m.ResetFilter()
+
+				if _, ok := chosenTemplates[title]; ok {
+					return m.NewStatusMessage(statusMessageStyle("Template " + title + " is chosen once, skip..."))
+				}
+
 				// Copy .gitignore template
 				pwd, _ := os.Getwd()
 				if err := copyTemplate(path, filepath.Join(pwd, ".gitignore")); err != nil {
 					return m.NewStatusMessage(errorMessageStyle(err.Error()))
 				}
+
+				// Record the chosen template to prevent duplicate
+				chosenTemplates[title] = struct{}{}
+
 				return m.NewStatusMessage(statusMessageStyle("Use template " + title))
 			}
 		}
