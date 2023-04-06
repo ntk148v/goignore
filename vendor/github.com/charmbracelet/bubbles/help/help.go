@@ -57,8 +57,8 @@ type Model struct {
 	Styles Styles
 }
 
-// NewModel creates a new help view with some useful defaults.
-func NewModel() Model {
+// New creates a new help view with some useful defaults.
+func New() Model {
 	keyStyle := lipgloss.NewStyle().Foreground(lipgloss.AdaptiveColor{
 		Light: "#909090",
 		Dark:  "#626262",
@@ -89,6 +89,11 @@ func NewModel() Model {
 		},
 	}
 }
+
+// NewModel creates a new help view with some useful defaults.
+//
+// Deprecated: use [New] instead.
+var NewModel = New
 
 // Update helps satisfy the Bubble Tea Model interface. It's a no-op.
 func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
@@ -159,8 +164,12 @@ func (m Model) FullHelpView(groups [][]key.Binding) string {
 		return ""
 	}
 
+	// Linter note: at this time we don't think it's worth the additional
+	// code complexity involved in preallocating this slice.
+	//nolint:prealloc
 	var (
-		out        []string
+		out []string
+
 		totalWidth int
 		sep        = m.Styles.FullSeparator.Render(m.FullSeparator)
 		sepWidth   = lipgloss.Width(sep)
@@ -194,7 +203,7 @@ func (m Model) FullHelpView(groups [][]key.Binding) string {
 
 		// Column
 		totalWidth += lipgloss.Width(col)
-		if totalWidth > m.Width {
+		if m.Width > 0 && totalWidth > m.Width {
 			break
 		}
 
@@ -203,7 +212,7 @@ func (m Model) FullHelpView(groups [][]key.Binding) string {
 		// Separator
 		if i < len(group)-1 {
 			totalWidth += sepWidth
-			if totalWidth > m.Width {
+			if m.Width > 0 && totalWidth > m.Width {
 				break
 			}
 		}

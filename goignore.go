@@ -22,6 +22,7 @@ import (
 
 	"github.com/charmbracelet/bubbles/key"
 	"github.com/charmbracelet/bubbles/list"
+	"github.com/charmbracelet/bubbles/spinner"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 )
@@ -68,6 +69,7 @@ func newListKeyMap() *listKeyMap {
 
 type model struct {
 	list         list.Model
+	spinner      spinner.Model
 	keys         *listKeyMap
 	delegateKeys *delegateKeyMap
 }
@@ -86,7 +88,7 @@ func newModel() model {
 
 	// Setup list
 	delegate := newItemDelegate(delegateKeys)
-	ignoreList := list.NewModel(items, delegate, 0, 0)
+	ignoreList := list.New(items, delegate, 0, 0)
 	ignoreList.Title = "Ignore templates"
 	ignoreList.Styles.Title = titleStyle
 	ignoreList.AdditionalShortHelpKeys = func() []key.Binding {
@@ -100,15 +102,21 @@ func newModel() model {
 		}
 	}
 
+	// Setup spinner
+	s := spinner.New()
+	s.Spinner = spinner.Dot
+	s.Style = lipgloss.NewStyle().Foreground(lipgloss.Color("63"))
+
 	return model{
 		list:         ignoreList,
+		spinner:      s,
 		keys:         listKeys,
 		delegateKeys: delegateKeys,
 	}
 }
 
 func (m model) Init() tea.Cmd {
-	return tea.EnterAltScreen
+	return tea.Batch(tea.EnterAltScreen, m.spinner.Tick)
 }
 
 func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
@@ -117,7 +125,10 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case tea.WindowSizeMsg:
 		topGap, rightGap, bottomGap, leftGap := appStyle.GetPadding()
 		m.list.SetSize(msg.Width-leftGap-rightGap, msg.Height-topGap-bottomGap)
-
+	case spinner.TickMsg:
+		var cmd tea.Cmd
+		m.spinner, cmd = m.spinner.Update(msg)
+		return m, cmd
 	case tea.KeyMsg:
 		// Don't match any of the keys below if we're actively filtering.
 		if m.list.FilterState() == list.Filtering {
@@ -126,7 +137,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 		switch {
 		case key.Matches(msg, m.keys.updateTemplates):
-			cmd := m.list.NewStatusMessage(statusMessageStyle("Pull newest templates"))
+			cmd := m.list.NewStatusMessage(m.spinner.View() + statusMessageStyle("Pull newest templates"))
 			if err := pullTemplateUpdates(); err != nil {
 				cmd = m.list.NewStatusMessage(errorMessageStyle(err.Error()))
 			}
@@ -153,7 +164,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	if err := tea.NewProgram(newModel()).Start(); err != nil {
+	if _, err := tea.NewProgram(newModel()).Run(); err != nil {
 		fmt.Println("Error running program:", err)
 		os.Exit(1)
 	}

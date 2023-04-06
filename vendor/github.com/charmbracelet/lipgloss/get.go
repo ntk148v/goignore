@@ -71,12 +71,32 @@ func (s Style) GetHeight() int {
 	return s.getAsInt(heightKey)
 }
 
-// GetAlign returns the style's implicit alignment setting. If no alignment is
-// set Position.AlignLeft is returned.
+// GetAlign returns the style's implicit horizontal alignment setting.
+// If no alignment is set Position.AlignLeft is returned.
 func (s Style) GetAlign() Position {
-	v := s.getAsPosition(alignKey)
+	v := s.getAsPosition(alignHorizontalKey)
 	if v == Position(0) {
 		return Left
+	}
+	return v
+}
+
+// GetAlignHorizontal returns the style's implicit horizontal alignment setting.
+// If no alignment is set Position.AlignLeft is returned.
+func (s Style) GetAlignHorizontal() Position {
+	v := s.getAsPosition(alignHorizontalKey)
+	if v == Position(0) {
+		return Left
+	}
+	return v
+}
+
+// GetAlignVertical returns the style's implicit vertical alignment setting.
+// If no alignment is set Position.AlignTop is returned.
+func (s Style) GetAlignVertical() Position {
+	v := s.getAsPosition(alignVerticalKey)
+	if v == Position(0) {
+		return Top
 	}
 	return v
 }
@@ -287,7 +307,7 @@ func (s Style) GetBorderLeftSize() int {
 	return s.getBorderStyle().GetLeftSize()
 }
 
-// GetBorderLeftWidth returns the width of the bottom border. If borders
+// GetBorderBottomSize returns the width of the bottom border. If borders
 // contain runes of varying widths, the widest rune is returned. If no border
 // exists on the left edge, 0 is returned.
 func (s Style) GetBorderBottomSize() int {

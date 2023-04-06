@@ -67,15 +67,37 @@ func (f filteredItems) items() []Item {
 	return agg
 }
 
-func (f filteredItems) matches() [][]int {
-	agg := make([][]int, len(f))
-	for i, v := range f {
-		agg[i] = v.matches
-	}
-	return agg
+// FilterMatchesMsg contains data about items matched during filtering. The
+// message should be routed to Update for processing.
+type FilterMatchesMsg []filteredItem
+
+// FilterFunc takes a term and a list of strings to search through
+// (defined by Item#FilterValue).
+// It should return a sorted list of ranks.
+type FilterFunc func(string, []string) []Rank
+
+// Rank defines a rank for a given item.
+type Rank struct {
+	// The index of the item in the original input.
+	Index int
+	// Indices of the actual word that were matched against the filter term.
+	MatchedIndexes []int
 }
 
-type filterMatchesMsg []filteredItem
+// DefaultFilter uses the sahilm/fuzzy to filter through the list.
+// This is set by default.
+func DefaultFilter(term string, targets []string) []Rank {
+	var ranks = fuzzy.Find(term, targets)
+	sort.Stable(ranks)
+	result := make([]Rank, len(ranks))
+	for i, r := range ranks {
+		result[i] = Rank{
+			Index:          r.Index,
+			MatchedIndexes: r.MatchedIndexes,
+		}
+	}
+	return result
+}
 
 type statusMessageTimeoutMsg struct{}
 
@@ -107,11 +129,19 @@ type Model struct {
 	showHelp         bool
 	filteringEnabled bool
 
+	itemNameSingular string
+	itemNamePlural   string
+
 	Title  string
 	Styles Styles
 
 	// Key mappings for navigating the list.
 	KeyMap KeyMap
+
+	// Filter is used to filter the list.
+	Filter FilterFunc
+
+	disableQuitKeybindings bool
 
 	// Additional key mappings for the short and full help views. This allows
 	// you to add additional key mappings to the help menu without
@@ -149,22 +179,22 @@ type Model struct {
 	delegate ItemDelegate
 }
 
-// NewModel returns a new model with sensible defaults.
-func NewModel(items []Item, delegate ItemDelegate, width, height int) Model {
+// New returns a new model with sensible defaults.
+func New(items []Item, delegate ItemDelegate, width, height int) Model {
 	styles := DefaultStyles()
 
-	sp := spinner.NewModel()
+	sp := spinner.New()
 	sp.Spinner = spinner.Line
 	sp.Style = styles.Spinner
 
-	filterInput := textinput.NewModel()
+	filterInput := textinput.New()
 	filterInput.Prompt = "Filter: "
 	filterInput.PromptStyle = styles.FilterPrompt
 	filterInput.CursorStyle = styles.FilterCursor
 	filterInput.CharLimit = 64
 	filterInput.Focus()
 
-	p := paginator.NewModel()
+	p := paginator.New()
 	p.Type = paginator.Dots
 	p.ActiveDot = styles.ActivePaginationDot.String()
 	p.InactiveDot = styles.InactivePaginationDot.String()
@@ -175,8 +205,11 @@ func NewModel(items []Item, delegate ItemDelegate, width, height int) Model {
 		showStatusBar:         true,
 		showPagination:        true,
 		showHelp:              true,
+		itemNameSingular:      "item",
+		itemNamePlural:        "items",
 		filteringEnabled:      true,
 		KeyMap:                DefaultKeyMap(),
+		Filter:                DefaultFilter,
 		Styles:                styles,
 		Title:                 "List",
 		FilterInput:           filterInput,
@@ -188,13 +221,18 @@ func NewModel(items []Item, delegate ItemDelegate, width, height int) Model {
 		items:     items,
 		Paginator: p,
 		spinner:   sp,
-		Help:      help.NewModel(),
+		Help:      help.New(),
 	}
 
 	m.updatePagination()
 	m.updateKeybindings()
 	return m
 }
+
+// NewModel returns a new model with sensible defaults.
+//
+// Deprecated: use [New] instead.
+var NewModel = New
 
 // SetFilteringEnabled enables or disables filtering. Note that this is different
 // from ShowFilter, which merely hides or shows the input view.
@@ -253,7 +291,19 @@ func (m Model) ShowStatusBar() bool {
 	return m.showStatusBar
 }
 
-// ShowingPagination hides or shoes the paginator. Note that pagination will
+// SetStatusBarItemName defines a replacement for the items identifier.
+// Defaults to item/items.
+func (m *Model) SetStatusBarItemName(singular, plural string) {
+	m.itemNameSingular = singular
+	m.itemNamePlural = plural
+}
+
+// StatusBarItemName returns singular and plural status bar item names.
+func (m Model) StatusBarItemName() (string, string) {
+	return m.itemNameSingular, m.itemNamePlural
+}
+
+// SetShowPagination hides or shoes the paginator. Note that pagination will
 // still be active, it simply won't be displayed.
 func (m *Model) SetShowPagination(v bool) {
 	m.showPagination = v
@@ -292,6 +342,7 @@ func (m *Model) SetItems(i []Item) tea.Cmd {
 	}
 
 	m.updatePagination()
+	m.updateKeybindings()
 	return cmd
 }
 
@@ -324,7 +375,8 @@ func (m *Model) SetItem(index int, item Item) tea.Cmd {
 	return cmd
 }
 
-// Insert an item at the given index. This returns a command.
+// Insert an item at the given index. If index is out of the upper bound, the
+// item will be appended. This returns a command.
 func (m *Model) InsertItem(index int, item Item) tea.Cmd {
 	var cmd tea.Cmd
 	m.items = insertItemIntoSlice(m.items, item, index)
@@ -334,6 +386,7 @@ func (m *Model) InsertItem(index int, item Item) tea.Cmd {
 	}
 
 	m.updatePagination()
+	m.updateKeybindings()
 	return cmd
 }
 
@@ -473,12 +526,20 @@ func (m Model) FilterValue() string {
 // SettingFilter returns whether or not the user is currently editing the
 // filter value. It's purely a convenience method for the following:
 //
-//     m.FilterState() == Filtering
+//	m.FilterState() == Filtering
 //
 // It's included here because it's a common thing to check for when
 // implementing this component.
 func (m Model) SettingFilter() bool {
 	return m.filterState == Filtering
+}
+
+// IsFiltered returns whether or not the list is currently filtered.
+// It's purely a convenience method for the following:
+//
+//	m.FilterState() == FilterApplied
+func (m Model) IsFiltered() bool {
+	return m.filterState == FilterApplied
 }
 
 // Width returns the current width setting.
@@ -508,7 +569,7 @@ func (m *Model) ToggleSpinner() tea.Cmd {
 // StartSpinner starts the spinner. Note that this returns a command.
 func (m *Model) StartSpinner() tea.Cmd {
 	m.showSpinner = true
-	return spinner.Tick
+	return m.spinner.Tick
 }
 
 // StopSpinner stops the spinner.
@@ -516,9 +577,10 @@ func (m *Model) StopSpinner() {
 	m.showSpinner = false
 }
 
-// Helper for disabling the keybindings used for quitting, incase you want to
+// Helper for disabling the keybindings used for quitting, in case you want to
 // handle this elsewhere in your application.
 func (m *Model) DisableQuitKeybindings() {
+	m.disableQuitKeybindings = true
 	m.KeyMap.Quit.SetEnabled(false)
 	m.KeyMap.ForceQuit.SetEnabled(false)
 }
@@ -601,12 +663,12 @@ func (m *Model) updateKeybindings() {
 		m.KeyMap.ClearFilter.SetEnabled(false)
 		m.KeyMap.CancelWhileFiltering.SetEnabled(true)
 		m.KeyMap.AcceptWhileFiltering.SetEnabled(m.FilterInput.Value() != "")
-		m.KeyMap.Quit.SetEnabled(true)
+		m.KeyMap.Quit.SetEnabled(false)
 		m.KeyMap.ShowFullHelp.SetEnabled(false)
 		m.KeyMap.CloseFullHelp.SetEnabled(false)
 
 	default:
-		hasItems := m.items != nil
+		hasItems := len(m.items) != 0
 		m.KeyMap.CursorUp.SetEnabled(hasItems)
 		m.KeyMap.CursorDown.SetEnabled(hasItems)
 
@@ -621,7 +683,7 @@ func (m *Model) updateKeybindings() {
 		m.KeyMap.ClearFilter.SetEnabled(m.filterState == FilterApplied)
 		m.KeyMap.CancelWhileFiltering.SetEnabled(false)
 		m.KeyMap.AcceptWhileFiltering.SetEnabled(false)
-		m.KeyMap.Quit.SetEnabled(true)
+		m.KeyMap.Quit.SetEnabled(!m.disableQuitKeybindings)
 
 		if m.Help.ShowAll {
 			m.KeyMap.ShowFullHelp.SetEnabled(true)
@@ -687,7 +749,7 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 			return m, tea.Quit
 		}
 
-	case filterMatchesMsg:
+	case FilterMatchesMsg:
 		m.filteredItems = filteredItems(msg)
 		return m, nil
 
@@ -999,7 +1061,10 @@ func (m Model) titleView() string {
 		}
 	}
 
-	return titleBarStyle.Render(view)
+	if len(view) > 0 {
+		return titleBarStyle.Render(view)
+	}
+	return view
 }
 
 func (m Model) statusView() string {
@@ -1008,21 +1073,25 @@ func (m Model) statusView() string {
 	totalItems := len(m.items)
 	visibleItems := len(m.VisibleItems())
 
-	plural := ""
+	var itemName string
 	if visibleItems != 1 {
-		plural = "s"
+		itemName = m.itemNamePlural
+	} else {
+		itemName = m.itemNameSingular
 	}
+
+	itemsDisplay := fmt.Sprintf("%d %s", visibleItems, itemName)
 
 	if m.filterState == Filtering {
 		// Filter results
 		if visibleItems == 0 {
 			status = m.Styles.StatusEmpty.Render("Nothing matched")
 		} else {
-			status = fmt.Sprintf("%d item%s", visibleItems, plural)
+			status = itemsDisplay
 		}
 	} else if len(m.items) == 0 {
 		// Not filtering: no items.
-		status = m.Styles.StatusEmpty.Render("No items")
+		status = m.Styles.StatusEmpty.Render("No " + m.itemNamePlural)
 	} else {
 		// Normal
 		filtered := m.FilterState() == FilterApplied
@@ -1033,7 +1102,7 @@ func (m Model) statusView() string {
 			status += fmt.Sprintf("“%s” ", f)
 		}
 
-		status += fmt.Sprintf("%d item%s", visibleItems, plural)
+		status += itemsDisplay
 	}
 
 	numFiltered := totalItems - visibleItems
@@ -1077,7 +1146,7 @@ func (m Model) populatedView() string {
 		if m.filterState == Filtering {
 			return ""
 		}
-		m.Styles.NoItems.Render("No items found.")
+		return m.Styles.NoItems.Render("No " + m.itemNamePlural + " found.")
 	}
 
 	if len(items) > 0 {
@@ -1118,7 +1187,7 @@ func (m Model) spinnerView() string {
 func filterItems(m Model) tea.Cmd {
 	return func() tea.Msg {
 		if m.FilterInput.Value() == "" || m.filterState == Unfiltered {
-			return filterMatchesMsg(m.itemsAsFilterItems()) // return nothing
+			return FilterMatchesMsg(m.itemsAsFilterItems()) // return nothing
 		}
 
 		targets := []string{}
@@ -1128,18 +1197,15 @@ func filterItems(m Model) tea.Cmd {
 			targets = append(targets, t.FilterValue())
 		}
 
-		var ranks fuzzy.Matches = fuzzy.Find(m.FilterInput.Value(), targets)
-		sort.Stable(ranks)
-
 		filterMatches := []filteredItem{}
-		for _, r := range ranks {
+		for _, r := range m.Filter(m.FilterInput.Value(), targets) {
 			filterMatches = append(filterMatches, filteredItem{
 				item:    items[r.Index],
 				matches: r.MatchedIndexes,
 			})
 		}
 
-		return filterMatchesMsg(filterMatches)
+		return FilterMatchesMsg(filterMatches)
 	}
 }
 

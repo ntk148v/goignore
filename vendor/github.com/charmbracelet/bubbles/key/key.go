@@ -2,35 +2,35 @@
 // keymappings useful in Bubble Tea components. There are a few different ways
 // you can define a keymapping with this package. Here's one example:
 //
-//     type KeyMap struct {
-//         Up key.Binding
-//         Down key.Binding
-//     }
+//	type KeyMap struct {
+//	    Up key.Binding
+//	    Down key.Binding
+//	}
 //
-//     var DefaultKeyMap = KeyMap{
-//         Up: key.NewBinding(
-//             key.WithKeys("k", "up"),        // actual keybindings
-//             key.WithHelp("↑/k", "move up"), // corresponding help text
-//         ),
-//         Down: key.NewBinding(
-//             WithKeys("j", "down"),
-//             WithHelp("↓/j", "move down"),
-//         ),
-//     }
+//	var DefaultKeyMap = KeyMap{
+//	    Up: key.NewBinding(
+//	        key.WithKeys("k", "up"),        // actual keybindings
+//	        key.WithHelp("↑/k", "move up"), // corresponding help text
+//	    ),
+//	    Down: key.NewBinding(
+//	        key.WithKeys("j", "down"),
+//	        key.WithHelp("↓/j", "move down"),
+//	    ),
+//	}
 //
-//     func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
-//         switch msg := msg.(type) {
-//         case tea.KeyMsg:
-//             switch {
-//             case key.Matches(msg, DefaultKeyMap.Up):
-//                 // The user pressed up
-//             case key.Matches(msg, DefaultKeyMap.Down):
-//                 // The user pressed down
-//             }
-//         }
+//	func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+//	    switch msg := msg.(type) {
+//	    case tea.KeyMsg:
+//	        switch {
+//	        case key.Matches(msg, DefaultKeyMap.Up):
+//	            // The user pressed up
+//	        case key.Matches(msg, DefaultKeyMap.Down):
+//	            // The user pressed down
+//	        }
+//	    }
 //
-//         // ...
-//     }
+//	    // ...
+//	}
 //
 // The help information, which is not used in the example above, can be used
 // to render help text for keystrokes in your views.
@@ -106,7 +106,7 @@ func (b Binding) Help() Help {
 // keybindings won't be activated and won't show up in help. Keybindings are
 // enabled by default.
 func (b Binding) Enabled() bool {
-	return !b.disabled
+	return !b.disabled && b.keys != nil
 }
 
 // SetEnabled enables or disables the keybinding.
@@ -128,11 +128,14 @@ type Help struct {
 	Desc string
 }
 
-// Matches checks if the given KeyMsg matches a given binding.
-func Matches(k tea.KeyMsg, b Binding) bool {
-	for _, v := range b.keys {
-		if k.String() == v && b.Enabled() {
-			return true
+// Matches checks if the given KeyMsg matches the given bindings.
+func Matches(k tea.KeyMsg, b ...Binding) bool {
+	keys := k.String()
+	for _, binding := range b {
+		for _, v := range binding.keys {
+			if keys == v && binding.Enabled() {
+				return true
+			}
 		}
 	}
 	return false

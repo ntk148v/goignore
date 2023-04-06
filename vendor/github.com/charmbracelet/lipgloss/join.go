@@ -17,15 +17,14 @@ import (
 //
 // Example:
 //
-//     blockB := "...\n...\n..."
-//     blockA := "...\n...\n...\n...\n..."
+//	blockB := "...\n...\n..."
+//	blockA := "...\n...\n...\n...\n..."
 //
-//     // Join 20% from the top
-//     str := lipgloss.JoinHorizontal(0.2, blockA, blockB)
+//	// Join 20% from the top
+//	str := lipgloss.JoinHorizontal(0.2, blockA, blockB)
 //
-//     // Join on the top edge
-//     str := lipgloss.JoinHorizontal(lipgloss.Top, blockA, blockB)
-//
+//	// Join on the top edge
+//	str := lipgloss.JoinHorizontal(lipgloss.Top, blockA, blockB)
 func JoinHorizontal(pos Position, strs ...string) string {
 	if len(strs) == 0 {
 		return ""
@@ -106,15 +105,14 @@ func JoinHorizontal(pos Position, strs ...string) string {
 //
 // Example:
 //
-//     blockB := "...\n...\n..."
-//     blockA := "...\n...\n...\n...\n..."
+//	blockB := "...\n...\n..."
+//	blockA := "...\n...\n...\n...\n..."
 //
-//     // Join 20% from the top
-//     str := lipgloss.JoinVertical(0.2, blockA, blockB)
+//	// Join 20% from the top
+//	str := lipgloss.JoinVertical(0.2, blockA, blockB)
 //
-//     // Join on the right edge
-//     str := lipgloss.JoinVertical(lipgloss.Right, blockA, blockB)
-//
+//	// Join on the right edge
+//	str := lipgloss.JoinVertical(lipgloss.Right, blockA, blockB)
 func JoinVertical(pos Position, strs ...string) string {
 	if len(strs) == 0 {
 		return ""
@@ -157,8 +155,8 @@ func JoinVertical(pos Position, strs ...string) string {
 				}
 
 				split := int(math.Round(float64(w) * pos.value()))
-				left := w - split
-				right := w - left
+				right := w - split
+				left := w - right
 
 				b.WriteString(strings.Repeat(" ", left))
 				b.WriteString(line)
